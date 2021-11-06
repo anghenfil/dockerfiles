@@ -1,0 +1,21 @@
+#We can't use alpine linux because of https://github.com/acmesh-official/acme.sh/issues/3698
+FROM ubuntu:latest
+
+ADD entrypoint.sh /entrypoint.sh
+
+RUN apt update \
+    && apt upgrade -y \
+    && apt install -y bash git wget openssl \
+    && adduser acme --gecos "" --disabled-password  --shell /bin/false -uid 4321 \
+    && mkdir /mnt/myacme \
+    && mkdir /mnt/myacme/config \
+    && mkdir /etc/tls \
+    && chown -R acme:acme /etc/tls \
+    && chown -R acme:acme /mnt/myacme
+
+USER acme
+
+#EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
+#CMD ["-c","/entrypoint.sh"]

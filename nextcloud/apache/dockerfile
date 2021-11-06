@@ -1,0 +1,38 @@
+FROM alpine:3.14
+ADD entrypoint.sh /entrypoint.sh
+
+ARG SERVERADMIN=you@example.com
+
+RUN echo "Test123: Admin is $SERVERADMIN"
+
+RUN apk update \
+    && apk upgrade \
+    #&& adduser www-data -D --shell /bin/false -G www-data \
+    && apk add apache2-proxy bash gnupg \
+    #&& chown -R apache:apache /var/www/ \
+    && wget https://download.nextcloud.com/server/releases/latest.zip -O latest.zip \
+    && wget https://download.nextcloud.com/server/releases/latest.zip.asc -O latest.zip.asc \
+    && wget https://download.nextcloud.com/server/releases/latest.zip.sha512 -O latest.zip.sha512 \
+    && sha512sum -c latest.zip.sha512 \
+    && gpg --recv-keys 28806A878AE423A28372792ED75899B9A724937A \
+    && gpg --verify latest.zip.asc latest.zip
+
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_PID_FILE /var/run/apache2.pid
+ENV APACHE_RUN_DIR /var/run/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+
+# Replace httpd config
+ADD httpd.conf /etc/apache2/httpd.conf
+
+RUN mkdir -p /var/lock/apache2 \
+&& chown apache:apache /var/www/logs \
+&& chown apache:apache /var/www/run
+
+USER apache
+
+EXPOSE 80
+
+ENTRYPOINT ["/bin/bash"]
+CMD ["-c","/entrypoint.sh"]

@@ -1,0 +1,19 @@
+FROM alpine:3.14
+
+RUN apk update \
+    && apk upgrade \
+    && apk add nginx bash \
+    && rm -rf /var/cache/apk/* \
+#    && adduser -S nginx \
+    && chown -R nginx:nginx /var/lib/nginx/tmp/
+
+ADD nginx.conf /etc/nginx/nginx.conf
+ADD http.d /etc/nginx/http.d/
+
+USER nginx
+
+EXPOSE 80
+EXPOSE 443
+
+ENTRYPOINT ["/bin/bash"]
+CMD ["-c","nginx"]
